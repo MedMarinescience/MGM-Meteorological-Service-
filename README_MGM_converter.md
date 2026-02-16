@@ -1,96 +1,112 @@
-# MGM Data Wrangler (`MGM_converter2.py`)
+# MGM Data Wrangler
 
-This script reads daily MGM report Excel files and combines them into one cleaned workbook:
+Parse Turkish Meteorological Service (MGM) daily Excel reports and combine them into one cleaned workbook with one sheet per station.
 
-- **Input folder**: `D:\Thesis\Thesis_data_examples`
-- **Output file**: `D:\Thesis\Thesis_data_examples\MGM_Station_Data_Cleaned.xlsx`
+This README is for:
 
----
-
-## 1) What input files are expected
-
-Place MGM daily parameter files (`.xlsx`) in the data folder.  
-Typical filenames look like:
-
-- `20250722794F-Günlük Ortalama Sıcaklık (°C).xlsx`
-- `20250722794F-Günlük Toplam Yağış (mm=kg÷m²) OMGİ .xlsx`
-- `20250722794F-Günlük Maksimum Rüzgar Yönü (°) ve Hızı  (m÷sn).xlsx`
-
-The script recognizes parameter files by normalized Turkish filename text.  
-Temporary Excel lock files (`~$*.xlsx`) are ignored automatically.
+- `MGM_converter2_MGM Data Wrangler_Standalone Script.py`
 
 ---
 
-## 2) Installation
+## Download and run (any PC)
 
-Use Python 3.9+ and install dependencies:
+1. **Get the script**
+   - Copy `MGM_converter2_MGM Data Wrangler_Standalone Script.py` into your project folder.
 
-```bash
-pip install pandas openpyxl
-```
+2. **Install Python**
+   - Use Python 3.9 or newer.
+
+3. **Install required packages**
+   ```bash
+   pip install pandas openpyxl
+   ```
+
+4. **Set your input folder**
+   - Open the script and change:
+   ```python
+   DATA_DIR = r"C:\path\to\your\mgm_data_folder"
+   ```
+
+5. **Run**
+   ```bash
+   python "MGM_converter2_MGM Data Wrangler_Standalone Script.py"
+   ```
+
+The output workbook is created in `DATA_DIR` as:
+
+- `MGM_Station_Data_Cleaned.xlsx`
 
 ---
 
-## 3) How to run
+## What the script does
 
-From terminal:
-
-```bash
-python "c:\Users\serha\Susurluk\Last_Script\MGM_converter2.py"
-```
-
-The script will:
-
-1. Scan `DATA_DIR` for recognized MGM `.xlsx` files.
-2. Parse all station/year blocks from each file.
-3. Merge parameters by station and date.
-4. Write the cleaned Excel workbook.
+- Scans `DATA_DIR` for MGM Excel files (`.xlsx`)
+- Ignores temporary Excel lock files (`~$*.xlsx`)
+- Detects parameter type from Turkish filename text using `PARAM_MAP`
+- Parses all station/year blocks from sheet `Report`
+- Merges parameters by `Date` for each station
+- Splits maximum wind values into:
+  - `Max_Wind_Dir_deg`
+  - `Max_Wind_Speed_mps`
+- Writes one summary sheet and one station sheet per station
 
 ---
 
-## 4) Input data layout (inside each MGM file)
+## Expected input files
 
-The parser expects each data block in sheet **`Report`** with this structure:
+Place MGM daily parameter files (`.xlsx`) in the data folder.
 
-- Header row: contains `Yıl: YYYY` and `İstasyon Adı/No: STATION/ID`
+Typical file naming patterns:
+
+- `...Günlük Ortalama Sıcaklık (°C).xlsx`
+- `...Günlük Toplam Yağış (mm=kg÷m²) OMGİ .xlsx`
+- `...Günlük Maksimum Rüzgar Yönü (°) ve Hızı (m÷sn).xlsx`
+
+If a file is not recognized by `PARAM_MAP`, the script skips it and prints a warning.
+
+---
+
+## Expected worksheet structure (inside each MGM file)
+
+The parser reads sheet name **`Report`** and expects each station/year block to follow:
+
+- Header row includes:
+  - `Yıl: YYYY`
+  - `İstasyon Adı/No: STATION_NAME/ID`
 - Row +2: parameter title
 - Row +3: month headers (`1..12`)
 - Rows +4..+34: day rows (`1..31`)
-- Month values are read from columns `2..13`
+- Values are read from month columns `2..13`
 
-Invalid calendar dates (for example, 30 Feb) are skipped.
-
----
-
-## 5) Output workbook format
-
-Output file: `MGM_Station_Data_Cleaned.xlsx`
-
-- Sheet **`_SUMMARY`**
-  - Columns:
-    - `Station_Name`
-    - `Station_ID`
-    - `Sheet_Name`
-    - `Date_Start`
-    - `Date_End`
-    - `N_Records`
-    - `Parameters`
-
-- One sheet per station
-  - Sheet name is Excel-safe and max 31 characters
-  - First column: `Date` (`YYYY-MM-DD`)
-  - Other columns: available parameters for that station
-
-Wind parameter is split into:
-
-- `Max_Wind_Dir_deg`
-- `Max_Wind_Speed_mps`
+Invalid dates (for example 30 Feb) are skipped automatically.
 
 ---
 
-## 6) Parameter name mapping in output
+## Output workbook format
 
-Recognized input files are mapped to these output columns:
+Output file:
+
+- `MGM_Station_Data_Cleaned.xlsx`
+
+### `_SUMMARY` sheet columns
+
+- `Station_Name`
+- `Station_ID`
+- `Sheet_Name`
+- `Date_Start`
+- `Date_End`
+- `N_Records`
+- `Parameters`
+
+### Station sheets
+
+- One sheet per station (Excel-safe name, max 31 chars)
+- Column `Date` formatted as `YYYY-MM-DD`
+- Remaining columns are available parameters for that station
+
+---
+
+## Output parameter columns
 
 - `Precip_OMGI_mm`
 - `Precip_Manuel_mm`
@@ -111,8 +127,21 @@ Recognized input files are mapped to these output columns:
 
 ---
 
-## 7) Notes and troubleshooting
+## Troubleshooting
 
-- If a file is shown as unrecognized, add or adjust its phrase in `PARAM_MAP` in `MGM_converter2.py`.
-- Make sure source files are not open/locked by Excel while running.
-- The script only parses sheet name `Report`; different sheet names are skipped by design.
+- **No recognized files found**
+  - Check `DATA_DIR` path and confirm files are `.xlsx`.
+- **Unrecognized filename**
+  - Add or adjust keyword mapping in `PARAM_MAP`.
+- **Excel file locked**
+  - Close open source files in Excel before running.
+- **No data parsed from a file**
+  - Confirm worksheet name is exactly `Report`.
+
+---
+
+## Notes
+
+- The script normalizes Turkish filename text before matching.
+- Output is designed for analysis-ready station-by-date tables.
+- If MGM report naming/layout changes, update parsing rules and `PARAM_MAP`.
