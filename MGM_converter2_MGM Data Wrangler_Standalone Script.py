@@ -31,7 +31,7 @@ except Exception:
 # ╔══════════════════════════════════════════════════════════════════╗
 # ║  CHANGE THIS PATH TO YOUR FOLDER                               ║
 # ╚══════════════════════════════════════════════════════════════════╝
-DATA_DIR = r"D:\Thesis\Thesis_data_examples"
+DATA_DIR = r"C:\user\data_examples"
 
 # Output file will be saved in the same folder
 OUTPUT_FILE = os.path.join(DATA_DIR, "MGM_Station_Data_Cleaned.xlsx")
@@ -461,4 +461,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
